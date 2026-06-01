@@ -2,6 +2,10 @@
   command = "npm run build"
   publish = "apps/client/dist"
 
+[build.environment]
+  DATA_STORE = "memory"
+  DATABASE_URL = "mysql://user:password@localhost:3306/rebirth_billion_times"
+
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"

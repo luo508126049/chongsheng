@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId        String   @id @map("user_id") @db.VarChar(64)
+  createdAt     DateTime @default(now()) @map("created_at")
+  channel       String   @default("web_h5") @db.VarChar(32)
+  memoryBalance Int      @default(0) @map("memory_balance")
+  rebirthCount  Int      @default(0) @map("rebirth_count")
+  runs          Run[]
+  talents       UserTalent[]
+  achievements  UserAchievement[]
+
+  @@map("users")
+}
+
+model Run {
+  runId           String       @id @map("run_id") @db.VarChar(64)
+  userId          String       @map("user_id") @db.VarChar(64)
+  worldId         String       @map("world_id") @db.VarChar(64)
+  status          RunStatus    @default(active)
+  stateJson       Json         @map("state_json")
+  selectedTalents Json         @map("selected_talents")
+  memorySummary   String       @map("memory_summary") @db.Text
+  turnIndex       Int          @default(0) @map("turn_index")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  user            User         @relation(fields: [userId], references: [userId])
+  messages        RunMessage[]
+  settlement      Settlement?
+
+  @@index([userId, status])
+  @@map("runs")
+}
+
+model RunMessage {
+  id        Int      @id @default(autoincrement())
+  runId     String   @map("run_id") @db.VarChar(64)
+  idx       Int
+  role      String   @db.VarChar(16)
+  content   Json
+  createdAt DateTime @default(now()) @map("created_at")
+  run       Run      @relation(fields: [runId], references: [runId])
+
+  @@unique([runId, idx])
+  @@map("run_messages")
+}
+
+model Settlement {
+  settlementId    String   @id @map("settlement_id") @db.VarChar(64)
+  runId           String   @unique @map("run_id") @db.VarChar(64)
+  userId          String   @map("user_id") @db.VarChar(64)
+  title           String   @db.VarChar(128)
+  description     String   @db.Text
+  survivedAge     Int      @map("survived_age")
+  memoryReward    Int      @map("memory_reward")
+  unlockedPayload Json     @map("unlocked_payload")
+  reportJson      Json     @map("report_json")
+  createdAt       DateTime @default(now()) @map("created_at")
+  run             Run      @relation(fields: [runId], references: [runId])
+
+  @@index([userId, createdAt])
+  @@map("settlements")
+}
+
+model WorldPack {
+  worldId      String   @id @map("world_id") @db.VarChar(64)
+  name         String   @db.VarChar(128)
+  summary      String   @db.Text
+  rulesJson    Json     @map("rules_json")
+  status       String   @default("enabled") @db.VarChar(16)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("world_packs")
+}
+
+model EventCard {
+  eventId          String   @id @map("event_id") @db.VarChar(64)
+  worldId          String   @map("world_id") @db.VarChar(64)
+  title            String   @db.VarChar(128)
+  triggerJson      Json     @map("trigger_json")
+  tagsJson         Json     @map("tags_json")
+  promptStub       String   @map("prompt_stub") @db.Text
+  outcomeTemplates Json     @map("outcome_templates")
+  deathLinksJson   Json     @map("death_links_json")
+  weight           Int      @default(10)
+  status           String   @default("enabled") @db.VarChar(16)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@index([worldId, status])
+  @@map("event_cards")
+}
+
+model DeathCard {
+  deathId       String   @id @map("death_id") @db.VarChar(64)
+  title         String   @db.VarChar(128)
+  triggerJson   Json     @map("trigger_json")
+  description   String   @db.Text
+  settlementHook String  @map("settlement_hook") @db.Text
+  status        String   @default("enabled") @db.VarChar(16)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("death_cards")
+}
+
+model Talent {
+  talentId            String   @id @map("talent_id") @db.VarChar(64)
+  name                String   @db.VarChar(128)
+  rarity              String   @db.VarChar(16)
+  capacityCost        Int      @default(1) @map("capacity_cost")
+  effectJson          Json     @map("effect_json")
+  unlockConditionJson Json     @map("unlock_condition_json")
+  status              String   @default("enabled") @db.VarChar(16)
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  users               UserTalent[]
+
+  @@map("talents")
+}
+
+model UserTalent {
+  userId     String   @map("user_id") @db.VarChar(64)
+  talentId   String   @map("talent_id") @db.VarChar(64)
+  unlockedAt DateTime @default(now()) @map("unlocked_at")
+  user       User     @relation(fields: [userId], references: [userId])
+  talent     Talent   @relation(fields: [talentId], references: [talentId])
+
+  @@id([userId, talentId])
+  @@map("user_talents")
+}
+
+model Achievement {
+  achievementId String   @id @map("achievement_id") @db.VarChar(64)
+  name          String   @db.VarChar(128)
+  description   String   @db.Text
+  conditionJson Json     @map("condition_json")
+  status        String   @default("enabled") @db.VarChar(16)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  users         UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  userId        String   @map("user_id") @db.VarChar(64)
+  achievementId String  @map("achievement_id") @db.VarChar(64)
+  unlockedAt    DateTime @default(now()) @map("unlocked_at")
+  user          User     @relation(fields: [userId], references: [userId])
+  achievement   Achievement @relation(fields: [achievementId], references: [achievementId])
+
+  @@id([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model TelemetryEvent {
+  id        Int      @id @default(autoincrement())
+  userId    String?  @map("user_id") @db.VarChar(64)
+  runId     String?  @map("run_id") @db.VarChar(64)
+  name      String   @db.VarChar(64)
+  payload   Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([name, createdAt])
+  @@index([runId])
+  @@map("telemetry_events")
+}
+
+model AdminUser {
+  adminId      String   @id @map("admin_id") @db.VarChar(64)
+  username     String   @unique @db.VarChar(64)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("admin_users")
+}
+
+enum RunStatus {
+  active
+  ended
+}

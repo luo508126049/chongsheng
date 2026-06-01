@@ -1,0 +1,24 @@
+{
+  "name": "rebirth-billion-times",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/client",
+    "apps/server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c cyan,green \"npm run dev -w apps/server\" \"npm run dev -w apps/client\"",
+    "dev:client": "npm run dev -w apps/client",
+    "dev:server": "npm run dev -w apps/server",
+    "build": "npm run build -w apps/server && npm run build -w apps/client",
+    "test": "npm run test -w apps/server",
+    "prisma:generate": "npm run prisma:generate -w apps/server",
+    "prisma:migrate": "npm run prisma:migrate -w apps/server",
+    "seed": "npm run seed -w apps/server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3"
+  }
+}
